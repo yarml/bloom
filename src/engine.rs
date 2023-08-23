@@ -1,3 +1,4 @@
+pub mod model;
 pub mod renderer;
 
 use winit::{
@@ -42,6 +43,7 @@ impl BloomEngine {
           ref event,
         } if window_id == self.window.id() => match event {
           WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
+          WindowEvent::KeyboardInput { input, .. } => {}
           _ => {}
         },
         _ => {}
