@@ -10,13 +10,17 @@ use wgpu::{
 };
 use winit::window::Window;
 
-use super::model::{ModelStorage, Vertex};
+use super::{
+  camera::Camera,
+  model::{ModelStorage, Vertex},
+};
 
 pub struct BloomRenderer {
   pub surface: Surface,
   pub device: Device,
   pub queue: Queue,
   pub config: SurfaceConfiguration,
+  pub camera: Camera,
 
   render_pipeline: RenderPipeline,
 }
@@ -70,10 +74,15 @@ impl BloomRenderer {
     surface.configure(&device, &config);
 
     let shader = device.create_shader_module(include_wgsl!("shader.wgsl"));
+
+    let camera_bind_group_layout = device.create_bind_group_layout(
+      &Camera::bind_group_layout_desc(Some("camera_bind_group")),
+    );
+
     let render_pipeline_layout =
       device.create_pipeline_layout(&PipelineLayoutDescriptor {
         label: Some("render_pipeline_layout"),
-        bind_group_layouts: &[],
+        bind_group_layouts: &[&camera_bind_group_layout],
         push_constant_ranges: &[],
       });
     let render_pipeline =
@@ -111,19 +120,22 @@ impl BloomRenderer {
         },
         multiview: None,
       });
+    let aspect_ratio = config.width as f32 / config.height as f32;
+    let camera = Camera::new(aspect_ratio, &camera_bind_group_layout, &device);
 
     Self {
       surface,
       queue,
       device,
       config,
+      camera,
 
       render_pipeline,
     }
   }
 
   pub fn render(
-    &self,
+    &mut self,
     model_storage: &ModelStorage,
   ) -> Result<(), SurfaceError> {
     let output = self.surface.get_current_texture()?;
@@ -137,6 +149,8 @@ impl BloomRenderer {
         .create_command_encoder(&CommandEncoderDescriptor {
           label: Some("render_encoder"),
         });
+
+    self.camera.update_proj_matrix(&self.queue);
 
     {
       let mut render_pass = encoder.begin_render_pass(&RenderPassDescriptor {
@@ -157,6 +171,7 @@ impl BloomRenderer {
         depth_stencil_attachment: None,
       });
       render_pass.set_pipeline(&self.render_pipeline);
+      render_pass.set_bind_group(0, &self.camera.camera_bind_group, &[]);
 
       model_storage
         .iter()

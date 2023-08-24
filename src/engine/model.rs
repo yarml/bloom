@@ -77,14 +77,14 @@ impl ModelStorage {
     }
   }
 
-  pub fn add_model(
-    &mut self,
-    vertices: &[Vertex],
-    indices: &[u16],
-    device: &Device,
-  ) {
-    self.models.push(Model::new(vertices, indices, device));
-  }
+  // pub fn add_model(
+  //   &mut self,
+  //   vertices: &[Vertex],
+  //   indices: &[u16],
+  //   device: &Device,
+  // ) {
+  //   self.models.push(Model::new(vertices, indices, device));
+  // }
 
   pub fn iter(&self) -> std::slice::Iter<'_, Model> {
     self.models.iter()
