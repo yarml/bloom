@@ -1,7 +1,7 @@
 use wgpu::{
   util::{BufferInitDescriptor, DeviceExt},
-  Buffer, BufferAddress, BufferUsages, Device, RenderPass, VertexBufferLayout,
-  VertexStepMode,
+  Buffer, BufferAddress, BufferUsages, Device, IndexFormat, RenderPass,
+  VertexBufferLayout, VertexStepMode,
 };
 
 #[repr(C)]
@@ -32,19 +32,26 @@ impl Vertex {
 
 pub struct Model {
   vertex_buffer: Buffer,
-  vertices_count: u32,
+  index_buffer: Buffer,
+  indices_count: u32,
 }
 
 impl Model {
-  pub fn new(vertices: &[Vertex], device: &Device) -> Self {
+  pub fn new(vertices: &[Vertex], indices: &[u16], device: &Device) -> Self {
     let vertex_buffer = device.create_buffer_init(&BufferInitDescriptor {
       label: Some("vertex_buffer"),
       contents: bytemuck::cast_slice(vertices),
       usage: BufferUsages::VERTEX,
     });
+    let index_buffer = device.create_buffer_init(&BufferInitDescriptor {
+      label: Some("index_buffer"),
+      contents: bytemuck::cast_slice(indices),
+      usage: BufferUsages::INDEX,
+    });
     Self {
       vertex_buffer,
-      vertices_count: vertices.len() as u32,
+      index_buffer,
+      indices_count: indices.len() as u32,
     }
   }
 
@@ -53,6 +60,33 @@ impl Model {
     render_pass: &mut RenderPass<'self_time>,
   ) {
     render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-    render_pass.draw(0..self.vertices_count, 0..1);
+    render_pass
+      .set_index_buffer(self.index_buffer.slice(..), IndexFormat::Uint16);
+    render_pass.draw_indexed(0..self.indices_count, 0, 0..1);
+  }
+}
+
+pub struct ModelStorage {
+  models: Vec<Model>,
+}
+
+impl ModelStorage {
+  pub fn new(models: Option<Vec<Model>>) -> Self {
+    Self {
+      models: models.unwrap_or(Vec::new()),
+    }
+  }
+
+  pub fn add_model(
+    &mut self,
+    vertices: &[Vertex],
+    indices: &[u16],
+    device: &Device,
+  ) {
+    self.models.push(Model::new(vertices, indices, device));
+  }
+
+  pub fn iter(&self) -> std::slice::Iter<'_, Model> {
+    self.models.iter()
   }
 }

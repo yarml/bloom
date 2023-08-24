@@ -2,22 +2,23 @@ pub mod model;
 pub mod renderer;
 
 use winit::{
-  event::{Event, WindowEvent},
+  event::{Event, VirtualKeyCode, WindowEvent},
   event_loop::{ControlFlow, EventLoop},
   window::{Window, WindowBuilder},
 };
+use winit_input_helper::WinitInputHelper;
 
 use self::{
-  model::{Model, Vertex},
+  model::{Model, ModelStorage, Vertex},
   renderer::BloomRenderer,
 };
 
 pub struct BloomEngine {
-  renderer: BloomRenderer,
-  event_loop: EventLoop<()>,
-  window: Window,
+  pub renderer: BloomRenderer,
+  pub event_loop: EventLoop<()>,
+  pub window: Window,
 
-  models: Vec<Model>,
+  pub model_storage: ModelStorage,
 }
 
 impl BloomEngine {
@@ -28,50 +29,71 @@ impl BloomEngine {
 
     let renderer = BloomRenderer::new(&window).await;
 
-    let models = vec![
+    let model_storage = ModelStorage::new(Some(vec![
       Model::new(
         &[
+          Vertex::new(-0.0868241, 0.49240386, 0.0),
+          Vertex::new(-0.49513406, 0.06958647, 0.0),
+          Vertex::new(-0.21918549, -0.44939706, 0.0),
+          Vertex::new(0.35966998, -0.3473291, 0.0),
+          Vertex::new(0.44147372, 0.2347359, 0.0),
+        ],
+        &[0, 1, 4, 1, 2, 4, 2, 3, 4],
+        &renderer.device,
+      ),
+      Model::new(
+        &[
+          Vertex::new(0.5, 0.5, 0.0),
           Vertex::new(0.0, 0.5, 0.0),
           Vertex::new(0.5, 0.0, 0.0),
-          Vertex::new(0.5, 0.5, 0.0),
         ],
+        &[0, 1, 2],
         &renderer.device,
       ),
-      Model::new(
-        &[
-          Vertex::new(-0.5, -0.5, 0.0),
-          Vertex::new(0.0, -0.5, 0.0),
-          Vertex::new(0.0, 0.0, 0.0),
-        ],
-        &renderer.device,
-      ),
-    ];
+    ]));
 
     Self {
       renderer,
       event_loop,
       window,
-      models,
+      model_storage,
     }
   }
 
   pub fn run(self) {
-    self
-      .event_loop
-      .run(move |event, _, control_flow| match event {
-        Event::MainEventsCleared => self.window.request_redraw(),
-        Event::RedrawRequested(window_id) if self.window.id() == window_id => {
-          self.renderer.render(&self.models).unwrap();
+    let Self {
+      renderer,
+      event_loop,
+      window,
+      model_storage,
+    } = self;
+
+    let mut input = WinitInputHelper::new();
+    event_loop.run(move |event, _, control_flow| {
+      input.update(&event);
+
+      Self::update(&input);
+
+      match event {
+        Event::MainEventsCleared => window.request_redraw(),
+        Event::RedrawRequested(window_id) if window.id() == window_id => {
+          renderer.render(&model_storage).unwrap();
         }
         Event::WindowEvent {
           window_id,
           ref event,
-        } if window_id == self.window.id() => match event {
+        } if window_id == window.id() => match event {
           WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
-          WindowEvent::KeyboardInput { .. } => {}
           _ => {}
         },
         _ => {}
-      })
+      }
+    })
+  }
+
+  fn update(input: &WinitInputHelper) {
+    if input.key_pressed(VirtualKeyCode::Space) {
+      println!("Space");
+    }
   }
 }

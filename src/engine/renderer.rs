@@ -10,7 +10,7 @@ use wgpu::{
 };
 use winit::window::Window;
 
-use super::model::{Model, Vertex};
+use super::model::{ModelStorage, Vertex};
 
 pub struct BloomRenderer {
   pub surface: Surface,
@@ -122,7 +122,10 @@ impl BloomRenderer {
     }
   }
 
-  pub fn render(&self, models: &Vec<Model>) -> Result<(), SurfaceError> {
+  pub fn render(
+    &self,
+    model_storage: &ModelStorage,
+  ) -> Result<(), SurfaceError> {
     let output = self.surface.get_current_texture()?;
     let view = output
       .texture
@@ -155,7 +158,7 @@ impl BloomRenderer {
       });
       render_pass.set_pipeline(&self.render_pipeline);
 
-      models
+      model_storage
         .iter()
         .for_each(|model| model.render(&mut render_pass));
     }
