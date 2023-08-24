@@ -10,6 +10,8 @@ use wgpu::{
 };
 use winit::window::Window;
 
+use super::model::{Model, Vertex};
+
 pub struct BloomRenderer {
   pub surface: Surface,
   pub device: Device,
@@ -81,7 +83,7 @@ impl BloomRenderer {
         vertex: VertexState {
           module: &shader,
           entry_point: "vs_main",
-          buffers: &[],
+          buffers: &[Vertex::layout()],
         },
         fragment: Some(FragmentState {
           module: &shader,
@@ -120,7 +122,7 @@ impl BloomRenderer {
     }
   }
 
-  pub fn render(&self) -> Result<(), SurfaceError> {
+  pub fn render(&self, models: &Vec<Model>) -> Result<(), SurfaceError> {
     let output = self.surface.get_current_texture()?;
     let view = output
       .texture
@@ -151,9 +153,11 @@ impl BloomRenderer {
         })],
         depth_stencil_attachment: None,
       });
-
       render_pass.set_pipeline(&self.render_pipeline);
-      render_pass.draw(0..6, 0..1);
+
+      models
+        .iter()
+        .for_each(|model| model.render(&mut render_pass));
     }
 
     self.queue.submit(std::iter::once(encoder.finish()));
