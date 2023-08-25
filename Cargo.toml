@@ -13,3 +13,8 @@ pollster = "0.3.0"
 wgpu = "0.17.0"
 winit = "0.28.6"
 winit_input_helper = "0.14.1"
+
+[dependencies.image]
+version = "0.24.7"
+default-features = false
+features = ["png", "jpeg"]

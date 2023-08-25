@@ -49,8 +49,8 @@ impl Camera {
     });
 
     Self {
-      position: (0.0, 0.0, 1.0).into(),
-      orientation: (90.0, 0.0).into(),
+      position: (0.0, 2.0, 3.0).into(),
+      orientation: (90.0, 45.0).into(),
 
       fovy: Deg(45.0),
       aspect,

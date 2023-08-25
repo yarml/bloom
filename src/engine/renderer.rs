@@ -1,7 +1,7 @@
 use wgpu::{
-  include_wgsl, Backends, BlendState, Color, ColorTargetState, ColorWrites,
-  CommandEncoderDescriptor, Device, DeviceDescriptor, Face, Features,
-  FragmentState, FrontFace, Limits, MultisampleState, Operations,
+  include_wgsl, Backends, BindGroupLayout, BlendState, Color, ColorTargetState,
+  ColorWrites, CommandEncoderDescriptor, Device, DeviceDescriptor, Face,
+  Features, FragmentState, FrontFace, Limits, MultisampleState, Operations,
   PipelineLayoutDescriptor, PolygonMode, PowerPreference, PrimitiveState,
   PrimitiveTopology, Queue, RenderPassColorAttachment, RenderPassDescriptor,
   RenderPipeline, RenderPipelineDescriptor, RequestAdapterOptions, Surface,
@@ -12,7 +12,11 @@ use winit::window::Window;
 
 use super::{
   camera::Camera,
-  model::{ModelStorage, Vertex},
+  game::block::{
+    instance::BlockInstance,
+    registry::{Block, BlockRegistry},
+  },
+  model::Vertex,
 };
 
 pub struct BloomRenderer {
@@ -21,6 +25,8 @@ pub struct BloomRenderer {
   pub queue: Queue,
   pub config: SurfaceConfiguration,
   pub camera: Camera,
+
+  pub texture_bind_group_layout: BindGroupLayout,
 
   render_pipeline: RenderPipeline,
 }
@@ -78,11 +84,17 @@ impl BloomRenderer {
     let camera_bind_group_layout = device.create_bind_group_layout(
       &Camera::bind_group_layout_desc(Some("camera_bind_group")),
     );
+    let texture_bind_group_layout = device.create_bind_group_layout(
+      &Block::texture_bind_group_layout(Some("block_texture_bind_group")),
+    );
 
     let render_pipeline_layout =
       device.create_pipeline_layout(&PipelineLayoutDescriptor {
         label: Some("render_pipeline_layout"),
-        bind_group_layouts: &[&camera_bind_group_layout],
+        bind_group_layouts: &[
+          &camera_bind_group_layout,
+          &texture_bind_group_layout,
+        ],
         push_constant_ranges: &[],
       });
     let render_pipeline =
@@ -92,7 +104,7 @@ impl BloomRenderer {
         vertex: VertexState {
           module: &shader,
           entry_point: "vs_main",
-          buffers: &[Vertex::layout()],
+          buffers: &[Vertex::layout(), BlockInstance::gfx_layout()],
         },
         fragment: Some(FragmentState {
           module: &shader,
@@ -130,13 +142,15 @@ impl BloomRenderer {
       config,
       camera,
 
+      texture_bind_group_layout,
+
       render_pipeline,
     }
   }
 
   pub fn render(
     &mut self,
-    model_storage: &ModelStorage,
+    block_registry: &mut BlockRegistry,
   ) -> Result<(), SurfaceError> {
     let output = self.surface.get_current_texture()?;
     let view = output
@@ -173,9 +187,7 @@ impl BloomRenderer {
       render_pass.set_pipeline(&self.render_pipeline);
       render_pass.set_bind_group(0, &self.camera.camera_bind_group, &[]);
 
-      model_storage
-        .iter()
-        .for_each(|model| model.render(&mut render_pass));
+      block_registry.render(&mut render_pass, &self.device);
     }
 
     self.queue.submit(std::iter::once(encoder.finish()));
