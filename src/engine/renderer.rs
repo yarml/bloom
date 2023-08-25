@@ -1,14 +1,17 @@
 use wgpu::{
   include_wgsl, Backends, BindGroupLayout, BlendState, Color, ColorTargetState,
-  ColorWrites, CommandEncoderDescriptor, Device, DeviceDescriptor, Face,
-  Features, FragmentState, FrontFace, Limits, MultisampleState, Operations,
+  ColorWrites, CommandEncoderDescriptor, CompareFunction, DepthBiasState,
+  DepthStencilState, Device, DeviceDescriptor, Extent3d, Face, Features,
+  FragmentState, FrontFace, Limits, LoadOp, MultisampleState, Operations,
   PipelineLayoutDescriptor, PolygonMode, PowerPreference, PrimitiveState,
-  PrimitiveTopology, Queue, RenderPassColorAttachment, RenderPassDescriptor,
-  RenderPipeline, RenderPipelineDescriptor, RequestAdapterOptions, Surface,
-  SurfaceConfiguration, SurfaceError, TextureUsages, TextureViewDescriptor,
-  VertexState,
+  PrimitiveTopology, Queue, RenderPassColorAttachment,
+  RenderPassDepthStencilAttachment, RenderPassDescriptor, RenderPipeline,
+  RenderPipelineDescriptor, RequestAdapterOptions, StencilState, Surface,
+  SurfaceConfiguration, SurfaceError, Texture, TextureDescriptor,
+  TextureDimension, TextureFormat, TextureUsages, TextureView,
+  TextureViewDescriptor, VertexState,
 };
-use winit::window::Window;
+use winit::{dpi::PhysicalSize, window::Window};
 
 use super::{
   camera::Camera,
@@ -24,9 +27,13 @@ pub struct BloomRenderer {
   pub device: Device,
   pub queue: Queue,
   pub config: SurfaceConfiguration,
+  pub size: PhysicalSize<u32>,
   pub camera: Camera,
 
   pub texture_bind_group_layout: BindGroupLayout,
+
+  depth_texture_view: TextureView,
+  depth_texture: Texture,
 
   render_pipeline: RenderPipeline,
 }
@@ -124,7 +131,13 @@ impl BloomRenderer {
           unclipped_depth: false,
           conservative: false,
         },
-        depth_stencil: None,
+        depth_stencil: Some(DepthStencilState {
+          format: TextureFormat::Depth32Float,
+          depth_write_enabled: true,
+          depth_compare: CompareFunction::Less,
+          stencil: StencilState::default(),
+          bias: DepthBiasState::default(),
+        }),
         multisample: MultisampleState {
           count: 1,
           mask: !0,
@@ -135,17 +148,47 @@ impl BloomRenderer {
     let aspect_ratio = config.width as f32 / config.height as f32;
     let camera = Camera::new(aspect_ratio, &camera_bind_group_layout, &device);
 
+    let (depth_texture, depth_texture_view) =
+      Self::create_depth_texture(config.width, config.height, &device);
+
     Self {
       surface,
       queue,
       device,
       config,
+      size,
       camera,
 
       texture_bind_group_layout,
+      depth_texture,
+      depth_texture_view,
 
       render_pipeline,
     }
+  }
+
+  fn create_depth_texture(
+    width: u32,
+    height: u32,
+    device: &Device,
+  ) -> (Texture, TextureView) {
+    let depth_texture = device.create_texture(&TextureDescriptor {
+      label: Some("depth_texture"),
+      size: Extent3d {
+        width,
+        height,
+        depth_or_array_layers: 1,
+      },
+      mip_level_count: 1,
+      sample_count: 1,
+      dimension: TextureDimension::D2,
+      format: TextureFormat::Depth32Float,
+      usage: TextureUsages::RENDER_ATTACHMENT,
+      view_formats: &[],
+    });
+    let depth_texture_view =
+      depth_texture.create_view(&TextureViewDescriptor::default());
+    (depth_texture, depth_texture_view)
   }
 
   pub fn render(
@@ -182,7 +225,14 @@ impl BloomRenderer {
             store: true,
           },
         })],
-        depth_stencil_attachment: None,
+        depth_stencil_attachment: Some(RenderPassDepthStencilAttachment {
+          view: &self.depth_texture_view,
+          depth_ops: Some(Operations {
+            load: LoadOp::Clear(1.0),
+            store: true,
+          }),
+          stencil_ops: None,
+        }),
       });
       render_pass.set_pipeline(&self.render_pipeline);
       render_pass.set_bind_group(0, &self.camera.camera_bind_group, &[]);
@@ -194,5 +244,25 @@ impl BloomRenderer {
     output.present();
 
     Ok(())
+  }
+
+  pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
+    if new_size.width > 0 && new_size.height > 0 {
+      self.size = new_size;
+      self.config.width = new_size.width;
+      self.config.height = new_size.height;
+      self.surface.configure(&self.device, &self.config);
+
+      let new_aspect = new_size.width as f32 / new_size.height as f32;
+      self.camera.update_aspect(new_aspect);
+
+      let (depth_texture, depth_texture_view) = Self::create_depth_texture(
+        new_size.width,
+        new_size.height,
+        &self.device,
+      );
+      self.depth_texture = depth_texture;
+      self.depth_texture_view = depth_texture_view;
+    }
   }
 }

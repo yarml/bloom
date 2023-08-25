@@ -103,6 +103,9 @@ impl Camera {
       );
     }
   }
+  pub fn update_aspect(&mut self, aspect: f32) {
+    self.aspect = aspect;
+  }
 
   pub fn forward(&self) -> Vector3<f32> {
     self.orientation.direction()

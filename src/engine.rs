@@ -81,6 +81,12 @@ impl BloomEngine {
           ref event,
         } if window_id == window.id() => match event {
           WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
+          WindowEvent::Resized(physical_size) => {
+            renderer.resize(*physical_size);
+          }
+          WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
+            renderer.resize(**new_inner_size);
+          }
           _ => {}
         },
         _ => {}
@@ -172,6 +178,7 @@ impl BloomEngine {
       .find_block("block/model:simple", "block:stone_bricks")
       .unwrap();
     stone_bricks_block.add_instance(BlockInstance::new((1, 0, 0).into()));
+    stone_bricks_block.add_instance(BlockInstance::new((1, 1, 0).into()));
   }
 
   fn update(input: &WinitInputHelper, renderer: &mut BloomRenderer) {
