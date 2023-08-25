@@ -179,6 +179,11 @@ impl BloomEngine {
       .unwrap();
     stone_bricks_block.add_instance(BlockInstance::new((1, 0, 0).into()));
     stone_bricks_block.add_instance(BlockInstance::new((1, 1, 0).into()));
+    stone_bricks_block.add_instance(BlockInstance::new((0, 1, 0).into()));
+    stone_bricks_block.add_instance(BlockInstance::new((2, 1, 0).into()));
+    stone_bricks_block.add_instance(BlockInstance::new((1, -1, 0).into()));
+    stone_bricks_block.add_instance(BlockInstance::new((0, -1, 0).into()));
+    stone_bricks_block.add_instance(BlockInstance::new((2, -1, 0).into()));
   }
 
   fn update(input: &WinitInputHelper, renderer: &mut BloomRenderer) {

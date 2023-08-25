@@ -35,7 +35,7 @@ pub struct BloomRenderer {
   depth_texture_view: TextureView,
   depth_texture: Texture,
 
-  render_pipeline: RenderPipeline,
+  default_render_pipeline: RenderPipeline,
 }
 
 impl BloomRenderer {
@@ -86,7 +86,8 @@ impl BloomRenderer {
     };
     surface.configure(&device, &config);
 
-    let shader = device.create_shader_module(include_wgsl!("shader.wgsl"));
+    let default_shader =
+      device.create_shader_module(include_wgsl!("shaders/default.wgsl"));
 
     let camera_bind_group_layout = device.create_bind_group_layout(
       &Camera::bind_group_layout_desc(Some("camera_bind_group")),
@@ -104,17 +105,17 @@ impl BloomRenderer {
         ],
         push_constant_ranges: &[],
       });
-    let render_pipeline =
+    let default_render_pipeline =
       device.create_render_pipeline(&RenderPipelineDescriptor {
-        label: Some("render_pipeline"),
+        label: Some("render_pipeline:default"),
         layout: Some(&render_pipeline_layout),
         vertex: VertexState {
-          module: &shader,
+          module: &default_shader,
           entry_point: "vs_main",
           buffers: &[Vertex::layout(), BlockInstance::gfx_layout()],
         },
         fragment: Some(FragmentState {
-          module: &shader,
+          module: &default_shader,
           entry_point: "fs_main",
           targets: &[Some(ColorTargetState {
             format: config.format,
@@ -163,7 +164,7 @@ impl BloomRenderer {
       depth_texture,
       depth_texture_view,
 
-      render_pipeline,
+      default_render_pipeline,
     }
   }
 
@@ -234,7 +235,7 @@ impl BloomRenderer {
           stencil_ops: None,
         }),
       });
-      render_pass.set_pipeline(&self.render_pipeline);
+      render_pass.set_pipeline(&self.default_render_pipeline);
       render_pass.set_bind_group(0, &self.camera.camera_bind_group, &[]);
 
       block_registry.render(&mut render_pass, &self.device);
