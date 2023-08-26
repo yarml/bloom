@@ -99,34 +99,91 @@ impl BloomEngine {
       .register_model(BlockModel::new(
         "simple",
         &[
-          // Front faces
+          // Front
           ((0.0, 0.0, 1.0), (0.0, 1.0)).into(), // 0
           ((1.0, 0.0, 1.0), (1.0, 1.0)).into(), // 1
           ((1.0, 1.0, 1.0), (1.0, 0.0)).into(), // 2
           ((0.0, 1.0, 1.0), (0.0, 0.0)).into(), // 3
-          // Back faces
-          ((0.0, 0.0, 0.0), (0.0, 0.0)).into(), // 4
-          ((1.0, 0.0, 0.0), (1.0, 0.0)).into(), // 5
-          ((1.0, 1.0, 0.0), (1.0, 1.0)).into(), // 6
-          ((0.0, 1.0, 0.0), (0.0, 1.0)).into(), // 7
-          // Positive side face
-          ((1.0, 0.0, 1.0), (0.0, 1.0)).into(), // 8 -> 1
-          ((1.0, 1.0, 1.0), (0.0, 0.0)).into(), // 9 -> 2
-          ((1.0, 0.0, 0.0), (1.0, 1.0)).into(), // 10 -> 5
-          ((1.0, 1.0, 0.0), (1.0, 0.0)).into(), // 11 -> 6
-          // Negative side face
-          ((0.0, 0.0, 1.0), (0.0, 1.0)).into(), // 12 -> 0
-          ((0.0, 1.0, 1.0), (0.0, 0.0)).into(), // 13 -> 3
-          ((0.0, 0.0, 0.0), (1.0, 1.0)).into(), // 14 -> 4
-          ((0.0, 1.0, 0.0), (1.0, 0.0)).into(), // 15 -> 7
+          // Back
+          ((0.0, 0.0, 0.0), (1.0, 1.0)).into(), // 4
+          ((1.0, 0.0, 0.0), (0.0, 1.0)).into(), // 5
+          ((1.0, 1.0, 0.0), (0.0, 0.0)).into(), // 6
+          ((0.0, 1.0, 0.0), (1.0, 0.0)).into(), // 7
+          // Top
+          ((1.0, 1.0, 1.0), (1.0, 1.0)).into(), // 8 -> 2
+          ((0.0, 1.0, 1.0), (0.0, 1.0)).into(), // 9 -> 3
+          ((1.0, 1.0, 0.0), (1.0, 0.0)).into(), // 10 -> 6
+          ((0.0, 1.0, 0.0), (0.0, 0.0)).into(), // 11 -> 7
+          // Bottom
+          ((0.0, 0.0, 1.0), (0.0, 0.0)).into(), // 12 -> 0
+          ((1.0, 0.0, 1.0), (1.0, 0.0)).into(), // 13 -> 1
+          ((0.0, 0.0, 0.0), (0.0, 1.0)).into(), // 14 -> 4
+          ((1.0, 0.0, 0.0), (1.0, 1.0)).into(), // 15 -> 5
+          // Positive side
+          ((1.0, 0.0, 1.0), (0.0, 1.0)).into(), // 16 -> 1
+          ((1.0, 1.0, 1.0), (0.0, 0.0)).into(), // 17 -> 2
+          ((1.0, 0.0, 0.0), (1.0, 1.0)).into(), // 18 -> 5
+          ((1.0, 1.0, 0.0), (1.0, 0.0)).into(), // 19 -> 6
+          // Negative side
+          ((0.0, 0.0, 1.0), (1.0, 1.0)).into(), // 20 -> 0
+          ((0.0, 1.0, 1.0), (1.0, 0.0)).into(), // 21 -> 3
+          ((0.0, 0.0, 0.0), (0.0, 1.0)).into(), // 22 -> 4
+          ((0.0, 1.0, 0.0), (0.0, 0.0)).into(), // 23 -> 7
         ],
         &[
-          0, 1, 2, 0, 2, 3, // Front face
-          7, 3, 6, 3, 2, 6, // Top face
-          9, 8, 11, 8, 10, 11, // Positive side
-          4, 1, 0, 4, 5, 1, // Bottom face
-          15, 14, 13, 14, 12, 13, // Negative side
-          5, 7, 6, 5, 4, 7, // Back face
+          0, 1, 2, 0, 2, 3, // Front
+          5, 4, 7, 5, 7, 6, // Back
+          9, 8, 10, 9, 10, 11, // Top
+          14, 15, 13, 14, 13, 12, // Bottom
+          16, 18, 19, 16, 19, 17, // Positive side
+          22, 20, 21, 22, 21, 23, // Negative side
+        ],
+        device,
+      ))
+      .unwrap();
+
+    block_registry
+      .register_model(BlockModel::new(
+        "side_vert",
+        &[
+          // Front
+          ((0.0, 0.0, 1.0), (0.0, 0.5)).into(), // 0
+          ((1.0, 0.0, 1.0), (0.5, 0.5)).into(), // 1
+          ((1.0, 1.0, 1.0), (0.5, 0.0)).into(), // 2
+          ((0.0, 1.0, 1.0), (0.0, 0.0)).into(), // 3
+          // Back
+          ((0.0, 0.0, 0.0), (0.5, 0.5)).into(), // 4
+          ((1.0, 0.0, 0.0), (0.0, 0.5)).into(), // 5
+          ((1.0, 1.0, 0.0), (0.0, 0.0)).into(), // 6
+          ((0.0, 1.0, 0.0), (0.5, 0.0)).into(), // 7
+          // Top
+          ((1.0, 1.0, 1.0), (1.0, 1.0)).into(), // 8 -> 2
+          ((0.0, 1.0, 1.0), (0.5, 1.0)).into(), // 9 -> 3
+          ((1.0, 1.0, 0.0), (1.0, 0.0)).into(), // 10 -> 6
+          ((0.0, 1.0, 0.0), (0.5, 0.0)).into(), // 11 -> 7
+          // Bottom
+          ((0.0, 0.0, 1.0), (0.5, 0.0)).into(), // 12 -> 0
+          ((1.0, 0.0, 1.0), (1.0, 0.0)).into(), // 13 -> 1
+          ((0.0, 0.0, 0.0), (0.5, 1.0)).into(), // 14 -> 4
+          ((1.0, 0.0, 0.0), (1.0, 1.0)).into(), // 15 -> 5
+          // Positive side
+          ((1.0, 0.0, 1.0), (0.0, 0.5)).into(), // 16 -> 1
+          ((1.0, 1.0, 1.0), (0.0, 0.0)).into(), // 17 -> 2
+          ((1.0, 0.0, 0.0), (0.5, 0.5)).into(), // 18 -> 5
+          ((1.0, 1.0, 0.0), (0.5, 0.0)).into(), // 19 -> 6
+          // Negative side
+          ((0.0, 0.0, 1.0), (0.5, 0.5)).into(), // 20 -> 0
+          ((0.0, 1.0, 1.0), (0.5, 0.0)).into(), // 21 -> 3
+          ((0.0, 0.0, 0.0), (0.0, 0.5)).into(), // 22 -> 4
+          ((0.0, 1.0, 0.0), (0.0, 0.0)).into(), // 23 -> 7
+        ],
+        &[
+          0, 1, 2, 0, 2, 3, // Front
+          5, 4, 7, 5, 7, 6, // Back
+          9, 8, 10, 9, 10, 11, // Top
+          14, 15, 13, 14, 13, 12, // Bottom
+          16, 18, 19, 16, 19, 17, // Positive side
+          22, 20, 21, 22, 21, 23, // Negative side
         ],
         device,
       ))
@@ -165,6 +222,19 @@ impl BloomEngine {
         ),
       )
       .unwrap();
+    block_registry
+      .register_block(
+        "block/model:side_vert",
+        Block::new(
+          "oak_log",
+          include_bytes!("engine/game/textures/oak_log.png"),
+          vec![],
+          texture_bind_group_layout,
+          device,
+          queue,
+        ),
+      )
+      .unwrap();
   }
 
   fn create_world(block_registry: &mut BlockRegistry) {
@@ -178,12 +248,11 @@ impl BloomEngine {
       .find_block("block/model:simple", "block:stone_bricks")
       .unwrap();
     stone_bricks_block.add_instance(BlockInstance::new((1, 0, 0).into()));
-    stone_bricks_block.add_instance(BlockInstance::new((1, 1, 0).into()));
-    stone_bricks_block.add_instance(BlockInstance::new((0, 1, 0).into()));
-    stone_bricks_block.add_instance(BlockInstance::new((2, 1, 0).into()));
-    stone_bricks_block.add_instance(BlockInstance::new((1, -1, 0).into()));
-    stone_bricks_block.add_instance(BlockInstance::new((0, -1, 0).into()));
-    stone_bricks_block.add_instance(BlockInstance::new((2, -1, 0).into()));
+
+    let oak_log = block_registry
+      .find_block("block/model:side_vert", "block:oak_log")
+      .unwrap();
+    oak_log.add_instance(BlockInstance::new((1, 1, 0).into()));
   }
 
   fn update(input: &WinitInputHelper, renderer: &mut BloomRenderer) {
