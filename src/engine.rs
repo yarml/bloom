@@ -4,6 +4,8 @@ pub mod math;
 pub mod model;
 pub mod renderer;
 
+use std::time::SystemTime;
+
 use cgmath::Vector3;
 use wgpu::{BindGroupLayout, Device, Queue};
 use winit::{
@@ -65,11 +67,15 @@ impl BloomEngine {
       mut block_registry,
     } = self;
 
+    let mut last_frame_time = SystemTime::now();
     let mut input = WinitInputHelper::new();
     event_loop.run(move |event, _, control_flow| {
+      let delta = last_frame_time.elapsed().unwrap().as_secs_f32();
+      last_frame_time = SystemTime::now();
+
       input.update(&event);
 
-      Self::update(&input, &mut renderer);
+      Self::update(delta, &input, &mut renderer);
 
       match event {
         Event::MainEventsCleared => window.request_redraw(),
@@ -262,23 +268,24 @@ impl BloomEngine {
     stone_block.add_instance(BlockInstance::new((0, 0, 0).into()));
     stone_block.add_instance(BlockInstance::new((2, 0, 0).into()));
 
-
     let stone_bricks_block = block_registry
       .find_block("block/model:simple", "block:stone_bricks")
       .unwrap();
     stone_bricks_block.add_instance(BlockInstance::new((1, 0, 0).into()));
 
-
     let oak_log = block_registry
       .find_block("block/model:side_vert", "block:oak_log")
       .unwrap();
     oak_log.add_instance(BlockInstance::new((1, 1, 0).into()));
-
   }
 
-  fn update(input: &WinitInputHelper, renderer: &mut BloomRenderer) {
-    let camera_speed = 0.003;
-    let sensitivity = 0.1;
+  fn update(
+    delta: f32,
+    input: &WinitInputHelper,
+    renderer: &mut BloomRenderer,
+  ) {
+    let camera_speed = 7.0 * delta;
+    let sensitivity = 120.0 * delta;
 
     let camera = &mut renderer.camera;
 
