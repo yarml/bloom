@@ -36,8 +36,8 @@ impl Orientation2 {
 
 impl From<(f32, f32)> for Orientation2 {
   fn from(value: (f32, f32)) -> Self {
-    let pitch = value.0;
-    let yaw = value.1;
+    let pitch = value.0 % 360.0;
+    let yaw = value.1 % 360.0;
     Orientation2::new(Deg(pitch), Deg(yaw))
   }
 }
@@ -46,6 +46,9 @@ impl AddAssign for Orientation2 {
   fn add_assign(&mut self, rhs: Self) {
     self.yaw += rhs.yaw;
     self.pitch += rhs.pitch;
+
+    self.yaw %= Deg(360.0);
+    self.pitch %= Deg(360.0);
   }
 }
 
@@ -53,5 +56,8 @@ impl SubAssign for Orientation2 {
   fn sub_assign(&mut self, rhs: Self) {
     self.yaw -= rhs.yaw;
     self.pitch -= rhs.pitch;
+
+    self.yaw %= Deg(360.0);
+    self.pitch %= Deg(360.0);
   }
 }

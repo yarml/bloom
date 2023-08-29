@@ -224,6 +224,19 @@ impl BloomEngine {
       .unwrap();
     block_registry
       .register_block(
+        "block/model:simple",
+        Block::new(
+          "glass",
+          include_bytes!("engine/game/textures/glass.png"),
+          vec![],
+          texture_bind_group_layout,
+          device,
+          queue,
+        ),
+      )
+      .unwrap();
+    block_registry
+      .register_block(
         "block/model:side_vert",
         Block::new(
           "oak_log",
@@ -238,21 +251,29 @@ impl BloomEngine {
   }
 
   fn create_world(block_registry: &mut BlockRegistry) {
+    let glass = block_registry
+      .find_block("block/model:simple", "block:glass")
+      .unwrap();
+    glass.add_instance(BlockInstance::new((0, 1, 0).into()));
+    glass.add_instance(BlockInstance::new((2, 1, 0).into()));
     let stone_block = block_registry
       .find_block("block/model:simple", "block:stone")
       .unwrap();
     stone_block.add_instance(BlockInstance::new((0, 0, 0).into()));
     stone_block.add_instance(BlockInstance::new((2, 0, 0).into()));
 
+
     let stone_bricks_block = block_registry
       .find_block("block/model:simple", "block:stone_bricks")
       .unwrap();
     stone_bricks_block.add_instance(BlockInstance::new((1, 0, 0).into()));
 
+
     let oak_log = block_registry
       .find_block("block/model:side_vert", "block:oak_log")
       .unwrap();
     oak_log.add_instance(BlockInstance::new((1, 1, 0).into()));
+
   }
 
   fn update(input: &WinitInputHelper, renderer: &mut BloomRenderer) {

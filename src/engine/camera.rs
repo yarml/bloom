@@ -129,6 +129,11 @@ impl Camera {
   }
   pub fn rotate(&mut self, delta: Orientation2) {
     self.orientation += delta;
+    if self.orientation.yaw > Deg(85.0) {
+      self.orientation.yaw = Deg(85.0);
+    } else if self.orientation.yaw < Deg(-85.0) {
+      self.orientation.yaw = Deg(-85.0);
+    }
   }
 }
 
