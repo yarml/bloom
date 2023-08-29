@@ -15,10 +15,7 @@ use winit::{dpi::PhysicalSize, window::Window};
 
 use super::{
   camera::Camera,
-  game::block::{
-    instance::BlockInstance,
-    registry::{Block, BlockRegistry},
-  },
+  game::block::{instance::BlockInstance, registry::BlockRegistry, Block},
   model::Vertex,
 };
 

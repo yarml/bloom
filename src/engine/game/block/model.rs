@@ -7,7 +7,7 @@ use wgpu::{
 
 use crate::engine::model::Vertex;
 
-use super::registry::Block;
+use super::Block;
 
 pub struct BlockModel {
   pub name: String,

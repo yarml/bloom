@@ -17,9 +17,7 @@ use winit_input_helper::WinitInputHelper;
 
 use self::{
   game::block::{
-    instance::BlockInstance,
-    model::BlockModel,
-    registry::{Block, BlockRegistry},
+    instance::BlockInstance, model::BlockModel, registry::BlockRegistry, Block,
   },
   math::Orientation2,
   renderer::BloomRenderer,
