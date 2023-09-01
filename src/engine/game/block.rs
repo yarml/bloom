@@ -1,24 +1,17 @@
 use image::GenericImageView;
 use wgpu::{
-  util::{BufferInitDescriptor, DeviceExt},
-  AddressMode, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
-  BindGroupLayoutEntry, BindingResource, Buffer, BufferUsages, Device,
-  FilterMode, RenderPass, SamplerDescriptor, TextureViewDescriptor, ImageDataLayout, TextureAspect, Origin3d, ImageCopyTexture, TextureUsages, TextureDimension, TextureFormat, TextureDescriptor, Extent3d, Queue, BindGroupLayout, BindGroup,
+  AddressMode, BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayout,
+  BindingResource, Device, Extent3d, FilterMode, ImageCopyTexture,
+  ImageDataLayout, Origin3d, Queue, SamplerDescriptor, TextureAspect,
+  TextureDescriptor, TextureDimension, TextureFormat, TextureUsages,
+  TextureViewDescriptor,
 };
 
-use self::instance::BlockInstance;
-
 pub mod instance;
-pub mod model;
 pub mod registry;
 
 pub struct Block {
-  pub name: String,
-
-  instances: Vec<BlockInstance>,
-  instances_buffer: Buffer,
-  dirty: bool, // When instances and instances_buffer are not synchronized
-
+  name: String,
   texture_bind_group: BindGroup,
 }
 
@@ -26,14 +19,10 @@ impl Block {
   pub fn new(
     name: &str,
     texture_data: &[u8],
-    instances: Vec<BlockInstance>,
     texture_bind_group_layout: &BindGroupLayout,
     device: &Device,
     queue: &Queue,
   ) -> Self {
-    let instances_buffer =
-      Self::create_instances_buffer(name, &instances, device);
-
     let texture_image = image::load_from_memory(texture_data).unwrap();
     let texture_rgba = texture_image.to_rgba8();
     let texture_dimensions = texture_image.dimensions();
@@ -99,78 +88,7 @@ impl Block {
 
     Self {
       name: format!("block:{}", name),
-      instances,
-      instances_buffer,
-      dirty: false,
       texture_bind_group,
-    }
-  }
-
-  fn create_instances_buffer(
-    name: &str,
-    instances: &Vec<BlockInstance>,
-    device: &Device,
-  ) -> Buffer {
-    let instances_data = instances
-      .iter()
-      .map(BlockInstance::model_matrix)
-      .collect::<Vec<_>>();
-    device.create_buffer_init(&BufferInitDescriptor {
-      label: Some(format!("block/instances:{}", name).as_str()),
-      contents: bytemuck::cast_slice(&instances_data),
-      usage: BufferUsages::VERTEX,
-    })
-  }
-
-  pub fn add_instance(&mut self, instance: BlockInstance) {
-    self.instances.push(instance);
-    self.dirty = true;
-  }
-
-  pub fn render_instances<'selftime>(
-    &'selftime mut self,
-    indices_count: u32,
-    render_pass: &mut RenderPass<'selftime>,
-    device: &Device,
-  ) {
-    if self.dirty {
-      self.instances_buffer = Self::create_instances_buffer(
-        self.name.as_str(),
-        &self.instances,
-        device,
-      );
-    }
-    render_pass.set_bind_group(1, &self.texture_bind_group, &[]);
-    render_pass.set_vertex_buffer(1, self.instances_buffer.slice(..));
-    render_pass.draw_indexed(0..indices_count, 0, 0..self.instances.len() as _);
-  }
-
-  const BIND_LAYOUT_ENTRIES: [BindGroupLayoutEntry; 2] = [
-    BindGroupLayoutEntry {
-      binding: 0,
-      visibility: wgpu::ShaderStages::FRAGMENT,
-      ty: wgpu::BindingType::Texture {
-        multisampled: false,
-        view_dimension: wgpu::TextureViewDimension::D2,
-        sample_type: wgpu::TextureSampleType::Float { filterable: true },
-      },
-      count: None,
-    },
-    BindGroupLayoutEntry {
-      binding: 1,
-      visibility: wgpu::ShaderStages::FRAGMENT,
-      // This should match the filterable field of the
-      // corresponding Texture entry above.
-      ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
-      count: None,
-    },
-  ];
-  pub fn texture_bind_group_layout(
-    label: Option<&str>,
-  ) -> BindGroupLayoutDescriptor {
-    BindGroupLayoutDescriptor {
-      label,
-      entries: &Self::BIND_LAYOUT_ENTRIES,
     }
   }
 }

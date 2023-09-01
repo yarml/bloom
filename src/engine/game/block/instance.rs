@@ -1,56 +1,28 @@
-use std::mem::size_of;
+use std::{
+  ops::{Add, Rem, Sub},
+  rc::Rc,
+};
 
-use cgmath::{Matrix4, Vector3};
-use wgpu::{BufferAddress, VertexBufferLayout};
+use cgmath::Vector3;
 
-#[derive(Clone, Copy)]
+use super::Block;
+
+#[derive(Clone, Copy, PartialEq)]
 pub struct BlockPosition {
   pub x: i32,
   pub y: i32,
   pub z: i32,
 }
 
+#[derive(Clone)]
 pub struct BlockInstance {
+  block: Rc<Block>,
   position: BlockPosition,
 }
 
 impl BlockInstance {
-  pub fn new(position: BlockPosition) -> Self {
-    Self { position }
-  }
-
-  pub fn model_matrix(&self) -> [[f32; 4]; 4] {
-    Matrix4::from_translation(self.position.into()).into()
-  }
-
-  pub fn gfx_layout() -> VertexBufferLayout<'static> {
-    use std::mem;
-    VertexBufferLayout {
-      array_stride: size_of::<[[f32; 4]; 4]>() as BufferAddress,
-      step_mode: wgpu::VertexStepMode::Instance,
-      attributes: &[
-        wgpu::VertexAttribute {
-          offset: 0,
-          shader_location: 5,
-          format: wgpu::VertexFormat::Float32x4,
-        },
-        wgpu::VertexAttribute {
-          offset: mem::size_of::<[f32; 4]>() as wgpu::BufferAddress,
-          shader_location: 6,
-          format: wgpu::VertexFormat::Float32x4,
-        },
-        wgpu::VertexAttribute {
-          offset: mem::size_of::<[f32; 8]>() as wgpu::BufferAddress,
-          shader_location: 7,
-          format: wgpu::VertexFormat::Float32x4,
-        },
-        wgpu::VertexAttribute {
-          offset: mem::size_of::<[f32; 12]>() as wgpu::BufferAddress,
-          shader_location: 8,
-          format: wgpu::VertexFormat::Float32x4,
-        },
-      ],
-    }
+  pub fn new(block: Rc<Block>, position: BlockPosition) -> Self {
+    Self { block, position }
   }
 }
 
@@ -70,6 +42,42 @@ impl From<(i32, i32, i32)> for BlockPosition {
       x: value.0,
       y: value.1,
       z: value.2,
+    }
+  }
+}
+
+impl Add for BlockPosition {
+  type Output = BlockPosition;
+
+  fn add(self, rhs: Self) -> Self::Output {
+    BlockPosition {
+      x: self.x + rhs.x,
+      y: self.y + rhs.y,
+      z: self.z + rhs.z,
+    }
+  }
+}
+
+impl Sub for BlockPosition {
+  type Output = BlockPosition;
+
+  fn sub(self, rhs: Self) -> Self::Output {
+    BlockPosition {
+      x: self.x - rhs.x,
+      y: self.y - rhs.y,
+      z: self.z - rhs.z,
+    }
+  }
+}
+
+impl Rem<i32> for BlockPosition {
+  type Output = BlockPosition;
+
+  fn rem(self, rhs: i32) -> Self::Output {
+    BlockPosition {
+      x: self.x % rhs,
+      y: self.y % rhs,
+      z: self.z % rhs,
     }
   }
 }

@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use wgpu::{
   include_wgsl, Backends, BindGroupLayout, BlendState, Color, ColorTargetState,
   ColorWrites, CommandEncoderDescriptor, CompareFunction, DepthBiasState,
@@ -13,11 +15,7 @@ use wgpu::{
 };
 use winit::{dpi::PhysicalSize, window::Window};
 
-use super::{
-  camera::Camera,
-  game::block::{instance::BlockInstance, registry::BlockRegistry, Block},
-  model::Vertex,
-};
+use super::{camera::Camera, mesh::Mesh, model::Vertex, texture::BloomTexture};
 
 pub struct BloomRenderer {
   pub surface: Surface,
@@ -89,9 +87,8 @@ impl BloomRenderer {
     let camera_bind_group_layout = device.create_bind_group_layout(
       &Camera::bind_group_layout_desc(Some("camera_bind_group")),
     );
-    let texture_bind_group_layout = device.create_bind_group_layout(
-      &Block::texture_bind_group_layout(Some("block_texture_bind_group")),
-    );
+    let texture_bind_group_layout =
+      device.create_bind_group_layout(&BloomTexture::bind_group_layout());
 
     let render_pipeline_layout =
       device.create_pipeline_layout(&PipelineLayoutDescriptor {
@@ -109,7 +106,7 @@ impl BloomRenderer {
         vertex: VertexState {
           module: &default_shader,
           entry_point: "vs_main",
-          buffers: &[Vertex::layout(), BlockInstance::gfx_layout()],
+          buffers: &[Vertex::layout()],
         },
         fragment: Some(FragmentState {
           module: &default_shader,
@@ -189,10 +186,7 @@ impl BloomRenderer {
     (depth_texture, depth_texture_view)
   }
 
-  pub fn render(
-    &mut self,
-    block_registry: &mut BlockRegistry,
-  ) -> Result<(), SurfaceError> {
+  pub fn render(&mut self, meshes: &Vec<Mesh>) -> Result<(), SurfaceError> {
     let output = self.surface.get_current_texture()?;
     let view = output
       .texture
@@ -235,7 +229,7 @@ impl BloomRenderer {
       render_pass.set_pipeline(&self.default_render_pipeline);
       render_pass.set_bind_group(0, &self.camera.camera_bind_group, &[]);
 
-      block_registry.render(&mut render_pass, &self.device);
+      meshes.iter().for_each(|mesh| mesh.render(&mut render_pass));
     }
 
     self.queue.submit(std::iter::once(encoder.finish()));

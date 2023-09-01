@@ -106,6 +106,9 @@ impl Camera {
   pub fn update_aspect(&mut self, aspect: f32) {
     self.aspect = aspect;
   }
+  pub fn inc_fovy(&mut self, delta_fovy: Deg<f32>) {
+    self.fovy += delta_fovy;
+  }
 
   pub fn forward(&self) -> Vector3<f32> {
     self.orientation.direction()
@@ -135,18 +138,23 @@ impl Camera {
       self.orientation.yaw = Deg(-85.0);
     }
   }
+
+  pub fn position(&self) -> Point3<f32> {
+    self.position
+  }
 }
 
 impl Display for Camera {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     write!(
       f,
-      "(x={}, y={}, z={}),(pitch={:?}, yaw={:?})",
+      "(x={}, y={}, z={}),(pitch={:?}, yaw={:?}, fovy: {:?})",
       self.position.x,
       self.position.y,
       self.position.z,
       self.orientation.pitch,
       self.orientation.yaw,
+      self.fovy,
     )
   }
 }
