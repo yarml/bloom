@@ -127,8 +127,8 @@ impl BloomEngine {
     block_registry.register_block(Rc::clone(&stone_block));
 
     let mut world = World::new();
-    world.set_block((1, 1, 1).into(), Some(Rc::clone(&stone_block)));
-    world.set_block((1, 0, 1).into(), Some(Rc::clone(&stone_block)));
+    world.set_block((1, 1, 1).into(), Some(&stone_block));
+    world.set_block((1, 0, 1).into(), Some(&stone_block));
 
     Ok((block_registry, world))
   }
@@ -151,7 +151,7 @@ impl BloomEngine {
 
       input.update(&event);
 
-      Self::update(delta, &input, &mut renderer);
+      Self::update(delta, &input, &mut renderer, &mut world, &block_registry);
 
       match event {
         Event::MainEventsCleared => window.request_redraw(),
@@ -182,6 +182,8 @@ impl BloomEngine {
     delta: f32,
     input: &WinitInputHelper,
     renderer: &mut BloomRenderer,
+    world: &mut World,
+    block_registry: &BlockRegistry,
   ) {
     let camera_speed = 7.0 * delta;
     let sensitivity = 120.0 * delta;
@@ -210,17 +212,17 @@ impl BloomEngine {
     }
 
     let mut delta_orientation: Orientation2 = (0.0, 0.0).into();
-    if input.key_held(VirtualKeyCode::Up) {
+    if input.key_held(VirtualKeyCode::I) {
       delta_orientation -= (0.0, sensitivity).into();
     }
-    if input.key_held(VirtualKeyCode::Down) {
+    if input.key_held(VirtualKeyCode::K) {
       delta_orientation += (0.0, sensitivity).into();
     }
 
-    if input.key_held(VirtualKeyCode::Right) {
+    if input.key_held(VirtualKeyCode::L) {
       delta_orientation += (sensitivity, 0.0).into();
     }
-    if input.key_held(VirtualKeyCode::Left) {
+    if input.key_held(VirtualKeyCode::J) {
       delta_orientation -= (sensitivity, 0.0).into();
     }
 
@@ -233,6 +235,14 @@ impl BloomEngine {
     }
     if input.key_held(VirtualKeyCode::P) {
       camera.inc_fovy(Deg(-10.0 * delta));
+    }
+
+    if input.key_pressed(VirtualKeyCode::R) {
+      let stone_block = block_registry.find_block("stone");
+      world.set_block((1, 1, 2).into(), Some(&stone_block));
+    }
+    if input.key_pressed(VirtualKeyCode::T) {
+      world.set_block((1, 1, 1).into(), None);
     }
 
     camera.displace(displacement);

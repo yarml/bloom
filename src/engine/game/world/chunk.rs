@@ -69,7 +69,11 @@ impl Chunk {
   //   self.origin
   // }
 
-  pub fn set_block(&mut self, relpos: BlockPosition, block: Option<Rc<Block>>) {
+  pub fn set_block(
+    &mut self,
+    relpos: BlockPosition,
+    block: Option<&Rc<Block>>,
+  ) {
     if !relpos.is_valid_chunk_relpos() {
       return;
     }
@@ -88,7 +92,9 @@ impl Chunk {
       self.inc_block_count(block_name);
     }
     self.blocks[block_idx] = match block {
-      Some(block) => Some(BlockInstance::new(block, self.origin + relpos)),
+      Some(block) => {
+        Some(BlockInstance::new(Rc::clone(block), self.origin + relpos))
+      }
       None => None,
     }
   }
@@ -123,7 +129,6 @@ impl Chunk {
     if !self.dirty {
       return;
     }
-    eprintln!("Invalidating meshes for chunk at {}", self.origin);
     self.dirty = false;
     self.meshes.clear();
     let block_type_counts = self.block_type_counts.clone(); // I hate this
@@ -143,7 +148,6 @@ impl Chunk {
         .map(|block| block.as_ref().unwrap())
         .filter(|block| block.block_type().name() == block_name)
         .for_each(|block| {
-          eprintln!("Block instance {}", block);
           let block_vertices = block
             .block_type()
             .model()
@@ -166,7 +170,6 @@ impl Chunk {
               }
               Some(_) => false,
             } {
-              eprintln!("Adding side {:?}", side);
               indices.extend(
                 block.block_type().model().indices_of(side, indices_shift),
               );

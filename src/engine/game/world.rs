@@ -24,7 +24,7 @@ impl World {
   pub fn set_block(
     &mut self,
     position: BlockPosition,
-    block: Option<Rc<Block>>,
+    block: Option<&Rc<Block>>,
   ) {
     let chunk_origin = position / 32;
     let relpos = position - chunk_origin;
