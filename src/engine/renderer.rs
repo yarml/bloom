@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use wgpu::{
   include_wgsl, Backends, BindGroupLayout, BlendState, Color, ColorTargetState,
   ColorWrites, CommandEncoderDescriptor, CompareFunction, DepthBiasState,
@@ -186,7 +184,7 @@ impl BloomRenderer {
     (depth_texture, depth_texture_view)
   }
 
-  pub fn render(&mut self, meshes: &Vec<Mesh>) -> Result<(), SurfaceError> {
+  pub fn render(&mut self, meshes: &[&Mesh]) -> Result<(), SurfaceError> {
     let output = self.surface.get_current_texture()?;
     let view = output
       .texture

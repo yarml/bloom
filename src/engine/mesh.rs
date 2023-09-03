@@ -7,6 +7,7 @@ use wgpu::{
 
 use super::{model::Vertex, texture::BloomTexture};
 
+#[derive(Debug)]
 pub struct Mesh {
   vertex_buffer: Buffer,
   index_buffer: Buffer,

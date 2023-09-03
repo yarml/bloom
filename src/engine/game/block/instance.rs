@@ -1,13 +1,16 @@
 use std::{
-  ops::{Add, Rem, Sub},
+  fmt::Display,
+  ops::{Add, Div, Rem, Sub},
   rc::Rc,
 };
 
-use cgmath::Vector3;
+use cgmath::{Point3, Vector3};
 
-use super::Block;
+use crate::engine::game::world::chunk::CHUNK_DIMEN;
 
-#[derive(Clone, Copy, PartialEq)]
+use super::{model::BlockMeshLocation, Block};
+
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct BlockPosition {
   pub x: i32,
   pub y: i32,
@@ -24,11 +27,99 @@ impl BlockInstance {
   pub fn new(block: Rc<Block>, position: BlockPosition) -> Self {
     Self { block, position }
   }
+
+  pub fn block_type(&self) -> &Block {
+    &self.block
+  }
+
+  pub fn position(&self) -> BlockPosition {
+    self.position
+  }
+}
+
+impl BlockPosition {
+  pub fn north(&self) -> Self {
+    Self {
+      x: self.x + 1,
+      y: self.y,
+      z: self.z,
+    }
+  }
+  pub fn south(&self) -> Self {
+    Self {
+      x: self.x - 1,
+      y: self.y,
+      z: self.z,
+    }
+  }
+  pub fn east(&self) -> Self {
+    Self {
+      x: self.x,
+      y: self.y,
+      z: self.z + 1,
+    }
+  }
+  pub fn west(&self) -> Self {
+    Self {
+      x: self.x,
+      y: self.y,
+      z: self.z - 1,
+    }
+  }
+  pub fn top(&self) -> Self {
+    Self {
+      x: self.x,
+      y: self.y + 1,
+      z: self.z,
+    }
+  }
+  pub fn bottom(&self) -> Self {
+    Self {
+      x: self.x,
+      y: self.y - 1,
+      z: self.z,
+    }
+  }
+
+  pub fn is_valid_chunk_relpos(&self) -> bool {
+    let chunk_range = 0..CHUNK_DIMEN as i32;
+    chunk_range.contains(&self.x)
+      && chunk_range.contains(&self.y)
+      && chunk_range.contains(&self.z)
+  }
+
+  pub fn neighbour(&self, location: BlockMeshLocation) -> Self {
+    match location {
+      BlockMeshLocation::North => self.north(),
+      BlockMeshLocation::South => self.south(),
+      BlockMeshLocation::East => self.east(),
+      BlockMeshLocation::West => self.west(),
+      BlockMeshLocation::Top => self.top(),
+      BlockMeshLocation::Bottom => self.bottom(),
+      BlockMeshLocation::Inside => self.clone(),
+    }
+  }
+}
+
+impl Display for BlockPosition {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    write!(f, "x={},y={},z={}", self.x, self.y, self.z)
+  }
 }
 
 impl Into<Vector3<f32>> for BlockPosition {
   fn into(self) -> Vector3<f32> {
     Vector3 {
+      x: self.x as f32,
+      y: self.y as f32,
+      z: self.z as f32,
+    }
+  }
+}
+
+impl Into<Point3<f32>> for BlockPosition {
+  fn into(self) -> Point3<f32> {
+    Point3 {
       x: self.x as f32,
       y: self.y as f32,
       z: self.z as f32,
@@ -79,5 +170,28 @@ impl Rem<i32> for BlockPosition {
       y: self.y % rhs,
       z: self.z % rhs,
     }
+  }
+}
+
+impl Div<i32> for BlockPosition {
+  type Output = BlockPosition;
+
+  fn div(self, rhs: i32) -> Self::Output {
+    BlockPosition {
+      x: self.x / rhs,
+      y: self.y / rhs,
+      z: self.z / rhs,
+    }
+  }
+}
+
+impl Display for BlockInstance {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    write!(
+      f,
+      "position=({}), block_type={:?}",
+      self.position,
+      self.block.name()
+    )
   }
 }

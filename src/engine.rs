@@ -19,9 +19,11 @@ use winit::{
 use winit_input_helper::WinitInputHelper;
 
 use self::{
-  game::{block::registry::BlockRegistry, world::World},
+  game::{
+    block::{model::BlockModel, registry::BlockRegistry, Block},
+    world::World,
+  },
   math::Orientation2,
-  mesh::Mesh,
   renderer::BloomRenderer,
   texture::BloomTexture,
 };
@@ -33,9 +35,7 @@ pub struct BloomEngine {
 
   pub block_registry: BlockRegistry,
   pub world: World,
-
-  textures: HashMap<String, Rc<BloomTexture>>,
-  meshes: Vec<Mesh>,
+  // textures: HashMap<String, Rc<BloomTexture>>,
 }
 
 impl BloomEngine {
@@ -46,10 +46,7 @@ impl BloomEngine {
 
     let renderer = BloomRenderer::new(&window).await;
 
-    let block_registry = BlockRegistry::new();
-    let world = World::new();
-
-    let (textures, meshes) = Self::init(
+    let (block_registry, world) = Self::init(
       &renderer.texture_bind_group_layout,
       &renderer.device,
       &renderer.queue,
@@ -62,9 +59,6 @@ impl BloomEngine {
       window,
       block_registry,
       world,
-
-      textures,
-      meshes,
     }
   }
 
@@ -72,32 +66,28 @@ impl BloomEngine {
     texture_bind_group_layout: &BindGroupLayout,
     device: &Device,
     queue: &Queue,
-  ) -> Result<(HashMap<String, Rc<BloomTexture>>, Vec<Mesh>)> {
+  ) -> Result<(BlockRegistry, World)> {
     let mut textures = HashMap::new();
+    let stone_texture = Rc::new(BloomTexture::from_raw_rbga(
+      "stone",
+      include_bytes!("engine/game/textures/stone.png"),
+      texture_bind_group_layout,
+      device,
+      queue,
+    )?);
 
-    textures.insert(
-      String::from("stone"),
-      Rc::new(BloomTexture::from_raw_rbga(
-        "stone",
-        include_bytes!("engine/game/textures/stone.png"),
-        texture_bind_group_layout,
-        device,
-        queue,
-      )?),
-    );
+    textures.insert(String::from("stone"), stone_texture);
 
     let stone_texture = textures.get("stone").unwrap().clone();
-    let mut meshes = Vec::new();
 
-    let test_mesh = Mesh::new(
-      "test",
+    let simple_model = Rc::new(BlockModel::new(
       &[
-        // Front
+        // East
         ((0.0, 0.0, 1.0), (0.0, 1.0)).into(), // 0
         ((1.0, 0.0, 1.0), (1.0, 1.0)).into(), // 1
         ((1.0, 1.0, 1.0), (1.0, 0.0)).into(), // 2
         ((0.0, 1.0, 1.0), (0.0, 0.0)).into(), // 3
-        // Back
+        // West
         ((0.0, 0.0, 0.0), (1.0, 1.0)).into(), // 4
         ((1.0, 0.0, 0.0), (0.0, 1.0)).into(), // 5
         ((1.0, 1.0, 0.0), (0.0, 0.0)).into(), // 6
@@ -112,32 +102,35 @@ impl BloomEngine {
         ((1.0, 0.0, 1.0), (1.0, 0.0)).into(), // 13 -> 1
         ((0.0, 0.0, 0.0), (0.0, 1.0)).into(), // 14 -> 4
         ((1.0, 0.0, 0.0), (1.0, 1.0)).into(), // 15 -> 5
-        // Positive side
+        // North
         ((1.0, 0.0, 1.0), (0.0, 1.0)).into(), // 16 -> 1
         ((1.0, 1.0, 1.0), (0.0, 0.0)).into(), // 17 -> 2
         ((1.0, 0.0, 0.0), (1.0, 1.0)).into(), // 18 -> 5
         ((1.0, 1.0, 0.0), (1.0, 0.0)).into(), // 19 -> 6
-        // Negative side
+        // South
         ((0.0, 0.0, 1.0), (1.0, 1.0)).into(), // 20 -> 0
         ((0.0, 1.0, 1.0), (1.0, 0.0)).into(), // 21 -> 3
         ((0.0, 0.0, 0.0), (0.0, 1.0)).into(), // 22 -> 4
         ((0.0, 1.0, 0.0), (0.0, 0.0)).into(), // 23 -> 7
       ],
-      &[
-        0, 1, 2, 0, 2, 3, // Front
-        5, 4, 7, 5, 7, 6, // Back
-        9, 8, 10, 9, 10, 11, // Top
-        14, 15, 13, 14, 13, 12, // Bottom
-        16, 18, 19, 16, 19, 17, // Positive side
-        22, 20, 21, 22, 21, 23, // Negative side
-      ],
-      stone_texture,
-      device,
-    );
+      &[16, 18, 19, 16, 19, 17], // North
+      &[22, 20, 21, 22, 21, 23], // South
+      &[0, 1, 2, 0, 2, 3],       // East
+      &[5, 4, 7, 5, 7, 6],       // West
+      &[9, 8, 10, 9, 10, 11],    // Top
+      &[14, 15, 13, 14, 13, 12], // Bottom
+      &[],                       // Inside
+    ));
+    let stone_block = Rc::new(Block::new("stone", simple_model, stone_texture));
 
-    meshes.push(test_mesh);
+    let mut block_registry = BlockRegistry::new();
+    block_registry.register_block(Rc::clone(&stone_block));
 
-    Ok((textures, meshes))
+    let mut world = World::new();
+    world.set_block((1, 1, 1).into(), Some(Rc::clone(&stone_block)));
+    world.set_block((1, 0, 1).into(), Some(Rc::clone(&stone_block)));
+
+    Ok((block_registry, world))
   }
 
   pub fn run(self) {
@@ -146,11 +139,8 @@ impl BloomEngine {
       event_loop,
       window,
 
-      block_registry: _,
-      world: _,
-
-      textures: _,
-      meshes: _,
+      block_registry,
+      mut world,
     } = self;
 
     let mut last_frame_time = SystemTime::now();
@@ -166,7 +156,9 @@ impl BloomEngine {
       match event {
         Event::MainEventsCleared => window.request_redraw(),
         Event::RedrawRequested(window_id) if window.id() == window_id => {
-          renderer.render(&self.meshes).unwrap();
+          let meshes =
+            world.meshes(&block_registry, &renderer.camera, &renderer.device);
+          renderer.render(&meshes).unwrap();
         }
         Event::WindowEvent {
           window_id,

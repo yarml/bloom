@@ -1,3 +1,4 @@
+use cgmath::Vector3;
 use wgpu::{BufferAddress, VertexBufferLayout, VertexStepMode};
 
 #[repr(C)]
@@ -25,6 +26,12 @@ impl Vertex {
       position: [x, y, z],
       tex_coords: [tx_x, tx_y],
     }
+  }
+
+  pub fn translate(&mut self, translation: Vector3<f32>) {
+    let [ox, oy, oz] = self.position;
+    let Vector3 { x, y, z } = translation;
+    self.position = [ox + x, oy + y, oz + z];
   }
 }
 

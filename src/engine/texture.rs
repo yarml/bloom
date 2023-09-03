@@ -10,6 +10,7 @@ use wgpu::{
   TextureViewDimension,
 };
 
+#[derive(Debug)]
 pub struct BloomTexture {
   pub texture: Texture,
   pub view: TextureView,

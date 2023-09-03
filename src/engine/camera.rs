@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use cgmath::{perspective, Deg, Matrix4, Point3, Vector3};
+use cgmath::{perspective, Deg, InnerSpace, Matrix4, Point3, Vector3};
 use wgpu::{
   BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayout,
   BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingType, Buffer,
@@ -117,16 +117,8 @@ impl Camera {
     Vector3::unit_y()
   }
   pub fn left(&self) -> Vector3<f32> {
-    self.forward().cross(self.up())
+    self.forward().cross(self.up()).normalize()
   }
-
-  // pub fn goto(&mut self, position: Point3<f32>) {
-  //   self.position = position;
-  // }
-  // pub fn look_at(&mut self, orientation: Orientation2) {
-  //   self.orientation = orientation;
-  // }
-
   pub fn displace(&mut self, delta: Vector3<f32>) {
     self.position += delta;
   }
@@ -139,22 +131,32 @@ impl Camera {
     }
   }
 
-  pub fn position(&self) -> Point3<f32> {
-    self.position
-  }
+  // pub fn position(&self) -> Point3<f32> {
+  //   self.position
+  // }
 }
 
 impl Display for Camera {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    let forward = self.forward();
+    let left = self.left();
     write!(
       f,
-      "(x={}, y={}, z={}),(pitch={:?}, yaw={:?}, fovy: {:?})",
+      "position=(x={:.2},y={:.2},z={:.2}),orientation=(pitch={:.2?},yaw={:.2?}),fovy={:.2?},forward=(x={:.2},y={:.2},z={:.2}),forward_mag={:.2},left=(x={:.2},y={:.2},z={:.2}),left_mag={:.2}",
       self.position.x,
       self.position.y,
       self.position.z,
       self.orientation.pitch,
       self.orientation.yaw,
       self.fovy,
+      forward.x,
+      forward.y,
+      forward.z,
+      forward.magnitude(),
+      left.x,
+      left.y,
+      left.z,
+      left.magnitude(),
     )
   }
 }
