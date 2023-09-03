@@ -41,28 +41,6 @@ pub struct BlockModel {
 }
 
 impl BlockModel {
-  pub fn new(
-    vertices: &[Vertex],
-    north_indices: &[u16],
-    south_indices: &[u16],
-    east_indices: &[u16],
-    west_indices: &[u16],
-    top_indices: &[u16],
-    bottom_indices: &[u16],
-    inside_indices: &[u16],
-  ) -> Self {
-    Self {
-      vertices: vertices.into(),
-      north_indices: north_indices.into(),
-      south_indices: south_indices.into(),
-      east_indices: east_indices.into(),
-      west_indices: west_indices.into(),
-      top_indices: top_indices.into(),
-      bottom_indices: bottom_indices.into(),
-      inside_indices: inside_indices.into(),
-    }
-  }
-
   pub fn indices_of(
     &self,
     location: BlockMeshLocation,
@@ -83,7 +61,7 @@ impl BlockModel {
   }
 
   pub fn has_face_at(&self, location: BlockMeshLocation) -> bool {
-    match location {
+    !match location {
       BlockMeshLocation::North => &self.north_indices,
       BlockMeshLocation::South => &self.south_indices,
       BlockMeshLocation::East => &self.east_indices,
@@ -92,8 +70,7 @@ impl BlockModel {
       BlockMeshLocation::Bottom => &self.bottom_indices,
       BlockMeshLocation::Inside => &self.inside_indices,
     }
-    .len()
-      != 0
+    .is_empty()
   }
 
   pub fn vertices_at(&self, origin: Point3<f32>) -> Vec<Vertex> {
@@ -101,10 +78,98 @@ impl BlockModel {
       .vertices
       .iter()
       .map(|vertex| {
-        let mut cvertex = vertex.clone();
+        let mut cvertex = *vertex;
         cvertex.translate(origin.to_vec());
         cvertex
       })
       .collect()
+  }
+
+  pub fn model_simple() -> Self {
+    Self {
+      vertices: vec![
+        // East
+        ((0.0, 0.0, 1.0), (0.0, 1.0)).into(), // 0
+        ((1.0, 0.0, 1.0), (1.0, 1.0)).into(), // 1
+        ((1.0, 1.0, 1.0), (1.0, 0.0)).into(), // 2
+        ((0.0, 1.0, 1.0), (0.0, 0.0)).into(), // 3
+        // West
+        ((0.0, 0.0, 0.0), (1.0, 1.0)).into(), // 4
+        ((1.0, 0.0, 0.0), (0.0, 1.0)).into(), // 5
+        ((1.0, 1.0, 0.0), (0.0, 0.0)).into(), // 6
+        ((0.0, 1.0, 0.0), (1.0, 0.0)).into(), // 7
+        // Top
+        ((1.0, 1.0, 1.0), (1.0, 1.0)).into(), // 8 -> 2
+        ((0.0, 1.0, 1.0), (0.0, 1.0)).into(), // 9 -> 3
+        ((1.0, 1.0, 0.0), (1.0, 0.0)).into(), // 10 -> 6
+        ((0.0, 1.0, 0.0), (0.0, 0.0)).into(), // 11 -> 7
+        // Bottom
+        ((0.0, 0.0, 1.0), (0.0, 0.0)).into(), // 12 -> 0
+        ((1.0, 0.0, 1.0), (1.0, 0.0)).into(), // 13 -> 1
+        ((0.0, 0.0, 0.0), (0.0, 1.0)).into(), // 14 -> 4
+        ((1.0, 0.0, 0.0), (1.0, 1.0)).into(), // 15 -> 5
+        // North
+        ((1.0, 0.0, 1.0), (0.0, 1.0)).into(), // 16 -> 1
+        ((1.0, 1.0, 1.0), (0.0, 0.0)).into(), // 17 -> 2
+        ((1.0, 0.0, 0.0), (1.0, 1.0)).into(), // 18 -> 5
+        ((1.0, 1.0, 0.0), (1.0, 0.0)).into(), // 19 -> 6
+        // South
+        ((0.0, 0.0, 1.0), (1.0, 1.0)).into(), // 20 -> 0
+        ((0.0, 1.0, 1.0), (1.0, 0.0)).into(), // 21 -> 3
+        ((0.0, 0.0, 0.0), (0.0, 1.0)).into(), // 22 -> 4
+        ((0.0, 1.0, 0.0), (0.0, 0.0)).into(), // 23 -> 7
+      ],
+      north_indices: vec![16, 18, 19, 16, 19, 17], // North
+      south_indices: vec![22, 20, 21, 22, 21, 23], // South
+      east_indices: vec![0, 1, 2, 0, 2, 3],        // East
+      west_indices: vec![5, 4, 7, 5, 7, 6],        // West
+      top_indices: vec![9, 8, 10, 9, 10, 11],      // Top
+      bottom_indices: vec![14, 15, 13, 14, 13, 12], // Bottom
+      inside_indices: vec![],                      // Inside
+    }
+  }
+
+  pub fn model_side_vert() -> Self {
+    Self {
+      vertices: vec![
+        // East
+        ((0.0, 0.0, 1.0), (0.0, 1.0)).into(), // 0
+        ((1.0, 0.0, 1.0), (0.5, 1.0)).into(), // 1
+        ((1.0, 1.0, 1.0), (0.5, 0.0)).into(), // 2
+        ((0.0, 1.0, 1.0), (0.0, 0.0)).into(), // 3
+        // West
+        ((0.0, 0.0, 0.0), (0.5, 1.0)).into(), // 4
+        ((1.0, 0.0, 0.0), (0.0, 1.0)).into(), // 5
+        ((1.0, 1.0, 0.0), (0.0, 0.0)).into(), // 6
+        ((0.0, 1.0, 0.0), (0.5, 0.0)).into(), // 7
+        // Top
+        ((1.0, 1.0, 1.0), (1.0, 1.0)).into(), // 8 -> 2
+        ((0.0, 1.0, 1.0), (0.5, 1.0)).into(), // 9 -> 3
+        ((1.0, 1.0, 0.0), (1.0, 0.0)).into(), // 10 -> 6
+        ((0.0, 1.0, 0.0), (0.5, 0.0)).into(), // 11 -> 7
+        // Bottom
+        ((0.0, 0.0, 1.0), (0.5, 0.0)).into(), // 12 -> 0
+        ((1.0, 0.0, 1.0), (1.0, 0.0)).into(), // 13 -> 1
+        ((0.0, 0.0, 0.0), (0.5, 1.0)).into(), // 14 -> 4
+        ((1.0, 0.0, 0.0), (1.0, 1.0)).into(), // 15 -> 5
+        // North
+        ((1.0, 0.0, 1.0), (0.0, 1.0)).into(), // 16 -> 1
+        ((1.0, 1.0, 1.0), (0.0, 0.0)).into(), // 17 -> 2
+        ((1.0, 0.0, 0.0), (0.5, 1.0)).into(), // 18 -> 5
+        ((1.0, 1.0, 0.0), (0.5, 0.0)).into(), // 19 -> 6
+        // South
+        ((0.0, 0.0, 1.0), (0.5, 1.0)).into(), // 20 -> 0
+        ((0.0, 1.0, 1.0), (0.5, 0.0)).into(), // 21 -> 3
+        ((0.0, 0.0, 0.0), (0.0, 1.0)).into(), // 22 -> 4
+        ((0.0, 1.0, 0.0), (0.0, 0.0)).into(), // 23 -> 7
+      ],
+      north_indices: vec![16, 18, 19, 16, 19, 17], // North
+      south_indices: vec![22, 20, 21, 22, 21, 23], // South
+      east_indices: vec![0, 1, 2, 0, 2, 3],        // East
+      west_indices: vec![5, 4, 7, 5, 7, 6],        // West
+      top_indices: vec![9, 8, 10, 9, 10, 11],      // Top
+      bottom_indices: vec![14, 15, 13, 14, 13, 12], // Bottom
+      inside_indices: vec![],                      // Inside
+    }
   }
 }

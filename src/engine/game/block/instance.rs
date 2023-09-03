@@ -96,7 +96,7 @@ impl BlockPosition {
       BlockMeshLocation::West => self.west(),
       BlockMeshLocation::Top => self.top(),
       BlockMeshLocation::Bottom => self.bottom(),
-      BlockMeshLocation::Inside => self.clone(),
+      BlockMeshLocation::Inside => *self,
     }
   }
 }
@@ -107,22 +107,22 @@ impl Display for BlockPosition {
   }
 }
 
-impl Into<Vector3<f32>> for BlockPosition {
-  fn into(self) -> Vector3<f32> {
-    Vector3 {
-      x: self.x as f32,
-      y: self.y as f32,
-      z: self.z as f32,
+impl From<BlockPosition> for Vector3<f32> {
+  fn from(val: BlockPosition) -> Self {
+    Self {
+      x: val.x as f32,
+      y: val.y as f32,
+      z: val.z as f32,
     }
   }
 }
 
-impl Into<Point3<f32>> for BlockPosition {
-  fn into(self) -> Point3<f32> {
-    Point3 {
-      x: self.x as f32,
-      y: self.y as f32,
-      z: self.z as f32,
+impl From<BlockPosition> for Point3<f32> {
+  fn from(val: BlockPosition) -> Self {
+    Self {
+      x: val.x as f32,
+      y: val.y as f32,
+      z: val.z as f32,
     }
   }
 }

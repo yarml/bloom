@@ -13,8 +13,8 @@ impl BlockRegistry {
     }
   }
 
-  pub fn register_block(&mut self, block: Rc<Block>) {
-    self.blocks.insert(block.name.clone(), block);
+  pub fn register_block(&mut self, block: &Rc<Block>) {
+    self.blocks.insert(block.name.clone(), Rc::clone(block));
   }
 
   pub fn find_block(&self, name: &str) -> Rc<Block> {

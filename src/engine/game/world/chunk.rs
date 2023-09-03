@@ -144,8 +144,7 @@ impl Chunk {
       self
         .blocks
         .iter()
-        .filter(|block| block.is_some())
-        .map(|block| block.as_ref().unwrap())
+        .filter_map(|block| block.as_ref())
         .filter(|block| block.block_type().name() == block_name)
         .for_each(|block| {
           let block_vertices = block

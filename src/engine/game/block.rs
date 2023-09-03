@@ -17,13 +17,13 @@ pub struct Block {
 impl Block {
   pub fn new(
     name: &str,
-    model: Rc<BlockModel>,
-    texture: Rc<BloomTexture>,
+    model: &Rc<BlockModel>,
+    texture: &Rc<BloomTexture>,
   ) -> Self {
     Self {
       name: name.into(),
-      model,
-      texture,
+      model: Rc::clone(model),
+      texture: Rc::clone(texture),
     }
   }
 

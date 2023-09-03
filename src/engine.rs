@@ -6,7 +6,7 @@ pub mod model;
 pub mod renderer;
 pub mod texture;
 
-use std::{collections::HashMap, rc::Rc, time::SystemTime};
+use std::{rc::Rc, time::SystemTime};
 
 use anyhow::*;
 use cgmath::{Deg, Vector3};
@@ -67,7 +67,6 @@ impl BloomEngine {
     device: &Device,
     queue: &Queue,
   ) -> Result<(BlockRegistry, World)> {
-    let mut textures = HashMap::new();
     let stone_texture = Rc::new(BloomTexture::from_raw_rbga(
       "stone",
       include_bytes!("engine/game/textures/stone.png"),
@@ -75,56 +74,35 @@ impl BloomEngine {
       device,
       queue,
     )?);
+    let glass_texture = Rc::new(BloomTexture::from_raw_rbga(
+      "glass",
+      include_bytes!("engine/game/textures/glass.png"),
+      texture_bind_group_layout,
+      device,
+      queue,
+    )?);
+    let oak_log_texture = Rc::new(BloomTexture::from_raw_rbga(
+      "oak_log",
+      include_bytes!("engine/game/textures/oak_log.png"),
+      texture_bind_group_layout,
+      device,
+      queue,
+    )?);
 
-    textures.insert(String::from("stone"), stone_texture);
+    let simple_model = Rc::new(BlockModel::model_simple());
+    let side_vert_model = Rc::new(BlockModel::model_side_vert());
 
-    let stone_texture = textures.get("stone").unwrap().clone();
-
-    let simple_model = Rc::new(BlockModel::new(
-      &[
-        // East
-        ((0.0, 0.0, 1.0), (0.0, 1.0)).into(), // 0
-        ((1.0, 0.0, 1.0), (1.0, 1.0)).into(), // 1
-        ((1.0, 1.0, 1.0), (1.0, 0.0)).into(), // 2
-        ((0.0, 1.0, 1.0), (0.0, 0.0)).into(), // 3
-        // West
-        ((0.0, 0.0, 0.0), (1.0, 1.0)).into(), // 4
-        ((1.0, 0.0, 0.0), (0.0, 1.0)).into(), // 5
-        ((1.0, 1.0, 0.0), (0.0, 0.0)).into(), // 6
-        ((0.0, 1.0, 0.0), (1.0, 0.0)).into(), // 7
-        // Top
-        ((1.0, 1.0, 1.0), (1.0, 1.0)).into(), // 8 -> 2
-        ((0.0, 1.0, 1.0), (0.0, 1.0)).into(), // 9 -> 3
-        ((1.0, 1.0, 0.0), (1.0, 0.0)).into(), // 10 -> 6
-        ((0.0, 1.0, 0.0), (0.0, 0.0)).into(), // 11 -> 7
-        // Bottom
-        ((0.0, 0.0, 1.0), (0.0, 0.0)).into(), // 12 -> 0
-        ((1.0, 0.0, 1.0), (1.0, 0.0)).into(), // 13 -> 1
-        ((0.0, 0.0, 0.0), (0.0, 1.0)).into(), // 14 -> 4
-        ((1.0, 0.0, 0.0), (1.0, 1.0)).into(), // 15 -> 5
-        // North
-        ((1.0, 0.0, 1.0), (0.0, 1.0)).into(), // 16 -> 1
-        ((1.0, 1.0, 1.0), (0.0, 0.0)).into(), // 17 -> 2
-        ((1.0, 0.0, 0.0), (1.0, 1.0)).into(), // 18 -> 5
-        ((1.0, 1.0, 0.0), (1.0, 0.0)).into(), // 19 -> 6
-        // South
-        ((0.0, 0.0, 1.0), (1.0, 1.0)).into(), // 20 -> 0
-        ((0.0, 1.0, 1.0), (1.0, 0.0)).into(), // 21 -> 3
-        ((0.0, 0.0, 0.0), (0.0, 1.0)).into(), // 22 -> 4
-        ((0.0, 1.0, 0.0), (0.0, 0.0)).into(), // 23 -> 7
-      ],
-      &[16, 18, 19, 16, 19, 17], // North
-      &[22, 20, 21, 22, 21, 23], // South
-      &[0, 1, 2, 0, 2, 3],       // East
-      &[5, 4, 7, 5, 7, 6],       // West
-      &[9, 8, 10, 9, 10, 11],    // Top
-      &[14, 15, 13, 14, 13, 12], // Bottom
-      &[],                       // Inside
-    ));
-    let stone_block = Rc::new(Block::new("stone", simple_model, stone_texture));
+    let stone_block =
+      Rc::new(Block::new("stone", &simple_model, &stone_texture));
+    let oak_log_block =
+      Rc::new(Block::new("oak_log", &side_vert_model, &oak_log_texture));
+    let glass_block =
+      Rc::new(Block::new("glass", &simple_model, &glass_texture));
 
     let mut block_registry = BlockRegistry::new();
-    block_registry.register_block(Rc::clone(&stone_block));
+    block_registry.register_block(&stone_block);
+    block_registry.register_block(&oak_log_block);
+    block_registry.register_block(&glass_block);
 
     let mut world = World::new();
     world.set_block((1, 1, 1).into(), Some(&stone_block));
@@ -238,11 +216,12 @@ impl BloomEngine {
     }
 
     if input.key_pressed(VirtualKeyCode::R) {
-      let stone_block = block_registry.find_block("stone");
-      world.set_block((1, 1, 2).into(), Some(&stone_block));
+      let oak_log_block = block_registry.find_block("oak_log");
+      world.set_block((1, 1, 2).into(), Some(&oak_log_block));
     }
     if input.key_pressed(VirtualKeyCode::T) {
-      world.set_block((1, 1, 1).into(), None);
+      let glass_block = block_registry.find_block("glass");
+      world.set_block((1, 1, 1).into(), Some(&glass_block));
     }
 
     camera.displace(displacement);
