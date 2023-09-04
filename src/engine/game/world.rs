@@ -46,7 +46,7 @@ impl World {
     camera: &Camera,
     device: &Device,
   ) -> Vec<&Mesh> {
-    self
+    let mut meshes = self
       .loaded_chunks
       .values_mut()
       .filter(|chunk| chunk.is_visible(camera))
@@ -54,6 +54,8 @@ impl World {
         chunk.invalidate_all_meshes(registry, device);
         acc.extend(chunk.meshes());
         acc
-      })
+      });
+    meshes.sort_by(|m1, m2| m1.draw_category().cmp(&m2.draw_category()));
+    meshes
   }
 }

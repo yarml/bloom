@@ -96,6 +96,14 @@ impl BlockPosition {
       BlockMeshLocation::West => self.west(),
       BlockMeshLocation::Top => self.top(),
       BlockMeshLocation::Bottom => self.bottom(),
+
+      BlockMeshLocation::TransparentNorth => self.north(),
+      BlockMeshLocation::TransparentSouth => self.south(),
+      BlockMeshLocation::TransparentEast => self.east(),
+      BlockMeshLocation::TransparentWest => self.west(),
+      BlockMeshLocation::TransparentTop => self.top(),
+      BlockMeshLocation::TransparentBottom => self.bottom(),
+
       BlockMeshLocation::Inside => *self,
     }
   }

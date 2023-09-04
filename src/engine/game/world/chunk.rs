@@ -156,7 +156,7 @@ impl Chunk {
 
           BlockMeshLocation::iter().for_each(|side| {
             let neighbour = self.block_at_abs(block.position().neighbour(side));
-            if match neighbour {
+            let include_side = match neighbour {
               None => true,
               Some(neighbour_block)
                 if side == BlockMeshLocation::Inside
@@ -168,7 +168,8 @@ impl Chunk {
                 true
               }
               Some(_) => false,
-            } {
+            };
+            if include_side {
               indices.extend(
                 block.block_type().model().indices_of(side, indices_shift),
               );
@@ -180,6 +181,7 @@ impl Chunk {
         &vertices,
         &indices,
         Rc::clone(&block_type.texture),
+        block_type.model.draw_category(),
         device,
       );
       self.meshes.insert(String::from(block_name), mesh);

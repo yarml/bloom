@@ -91,13 +91,18 @@ impl BloomEngine {
 
     let simple_model = Rc::new(BlockModel::model_simple());
     let side_vert_model = Rc::new(BlockModel::model_side_vert());
+    let simple_transparent_model =
+      Rc::new(BlockModel::model_simple_transparent());
 
     let stone_block =
       Rc::new(Block::new("stone", &simple_model, &stone_texture));
     let oak_log_block =
       Rc::new(Block::new("oak_log", &side_vert_model, &oak_log_texture));
-    let glass_block =
-      Rc::new(Block::new("glass", &simple_model, &glass_texture));
+    let glass_block = Rc::new(Block::new(
+      "glass",
+      &simple_transparent_model,
+      &glass_texture,
+    ));
 
     let mut block_registry = BlockRegistry::new();
     block_registry.register_block(&stone_block);
@@ -216,12 +221,12 @@ impl BloomEngine {
     }
 
     if input.key_pressed(VirtualKeyCode::R) {
-      let oak_log_block = block_registry.find_block("oak_log");
-      world.set_block((1, 1, 2).into(), Some(&oak_log_block));
+      let block = block_registry.find_block("glass");
+      world.set_block((1, 1, 2).into(), Some(&block));
     }
     if input.key_pressed(VirtualKeyCode::T) {
-      let glass_block = block_registry.find_block("glass");
-      world.set_block((1, 1, 1).into(), Some(&glass_block));
+      let block = block_registry.find_block("glass");
+      world.set_block((1, 1, 1).into(), Some(&block));
     }
 
     camera.displace(displacement);

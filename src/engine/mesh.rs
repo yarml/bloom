@@ -14,6 +14,8 @@ pub struct Mesh {
   indices_count: u32,
 
   texture: Rc<BloomTexture>,
+
+  draw_category: usize, // 0 gets drawn first etc, meshes with transparency have higher values
 }
 
 impl Mesh {
@@ -22,6 +24,7 @@ impl Mesh {
     vertices: &[Vertex],
     indices: &[u16],
     texture: Rc<BloomTexture>,
+    draw_category: usize,
     device: &Device,
   ) -> Self {
     let vertex_buffer = device.create_buffer_init(&BufferInitDescriptor {
@@ -40,6 +43,8 @@ impl Mesh {
       indices_count: indices.len() as u32,
 
       texture,
+
+      draw_category,
     }
   }
 
@@ -52,5 +57,9 @@ impl Mesh {
     render_pass
       .set_index_buffer(self.index_buffer.slice(..), IndexFormat::Uint16);
     render_pass.draw_indexed(0..self.indices_count, 0, 0..1);
+  }
+
+  pub fn draw_category(&self) -> usize {
+    self.draw_category
   }
 }
