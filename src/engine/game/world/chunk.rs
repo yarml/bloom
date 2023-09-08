@@ -31,10 +31,12 @@ pub struct Chunk {
 }
 
 impl Chunk {
+  const EMPTY_BLOCK: Option<BlockInstance> = None;
+
   pub fn new(origin: BlockPosition) -> Self {
     Self {
       origin,
-      blocks: [const { None }; CHUNK_BLOCK_COUNT],
+      blocks: [Self::EMPTY_BLOCK; CHUNK_BLOCK_COUNT],
       block_type_counts: HashMap::new(),
       meshes: HashMap::new(),
       dirty: false,

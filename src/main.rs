@@ -1,5 +1,3 @@
-#![feature(inline_const)]
-
 mod engine;
 
 use engine::BloomEngine;
