@@ -8,15 +8,7 @@ pub mod texture;
 
 use std::{rc::Rc, time::SystemTime};
 
-use anyhow::*;
-use cgmath::{Deg, Vector3};
-use wgpu::{BindGroupLayout, Device, Queue};
-use winit::{
-  event::{Event, VirtualKeyCode, WindowEvent},
-  event_loop::{ControlFlow, EventLoop},
-  window::{Window, WindowBuilder},
-};
-use winit_input_helper::WinitInputHelper;
+use crate::input::Input;
 
 use self::{
   game::{
@@ -27,6 +19,15 @@ use self::{
   renderer::BloomRenderer,
   texture::BloomTexture,
 };
+use anyhow::*;
+use cgmath::{Deg, Vector3};
+use wgpu::{BindGroupLayout, Device, Queue};
+use winit::{
+  event::{Event, VirtualKeyCode, WindowEvent},
+  event_loop::{ControlFlow, EventLoop},
+  window::{Window, WindowAttributes, WindowId},
+};
+use winit_input_helper::WinitInputHelper;
 
 pub struct BloomEngine {
   pub renderer: BloomRenderer,
@@ -39,11 +40,8 @@ pub struct BloomEngine {
 }
 
 impl BloomEngine {
-  pub async fn new(win_title: &str) -> Self {
+  pub async fn new(window: Window) -> Self {
     let event_loop = EventLoop::new();
-    let wb = WindowBuilder::new().with_title(win_title);
-    let window = wb.build(&event_loop).unwrap();
-
     let renderer = BloomRenderer::new(&window).await;
 
     let (block_registry, world) = Self::init(
@@ -111,7 +109,7 @@ impl BloomEngine {
 
     let mut world = World::new();
     world.set_block((1, 1, 1).into(), Some(&stone_block));
-    world.set_block((1, 0, 1).into(), Some(&stone_block));
+    world.set_block((1, 0, 1).into(), Some(&oak_log_block));
 
     Ok((block_registry, world))
   }
@@ -127,8 +125,8 @@ impl BloomEngine {
     } = self;
 
     let mut last_frame_time = SystemTime::now();
-    let mut input = WinitInputHelper::new();
-    event_loop.run(move |event, _, control_flow| {
+    let mut input = Input::new();
+    event_loop.run(move |event, eloop| {
       let delta = last_frame_time.elapsed().unwrap().as_secs_f32();
       last_frame_time = SystemTime::now();
 
@@ -137,28 +135,32 @@ impl BloomEngine {
       Self::update(delta, &input, &mut renderer, &mut world, &block_registry);
 
       match event {
-        Event::MainEventsCleared => window.request_redraw(),
-        Event::RedrawRequested(window_id) if window.id() == window_id => {
-          let meshes =
-            world.meshes(&block_registry, &renderer.camera, &renderer.device);
-          renderer.render(&meshes).unwrap();
-        }
+        //Event::AboutToWait => window.request_redraw(),
         Event::WindowEvent {
           window_id,
           ref event,
         } if window_id == window.id() => match event {
-          WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
+          WindowEvent::RedrawRequested => {}
           WindowEvent::Resized(physical_size) => {
             renderer.resize(*physical_size);
           }
-          WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
-            renderer.resize(**new_inner_size);
+          WindowEvent::CloseRequested => {
+            eloop.set_control_flow(ControlFlow::Exit)
           }
           _ => {}
         },
         _ => {}
       }
-    })
+    });
+  }
+
+  pub fn redraw(&mut self) {
+    let meshes = self.world.meshes(
+      &self.block_registry,
+      &self.renderer.camera,
+      &self.renderer.device,
+    );
+    self.renderer.render(&meshes).unwrap();
   }
 
   fn update(
@@ -231,5 +233,20 @@ impl BloomEngine {
 
     camera.displace(displacement);
     camera.rotate(delta_orientation);
+  }
+}
+
+impl ApplicationHandler for BloomEngine {
+  fn resumed(&mut self, event_loop: &ActiveEventLoop) {
+    WindowAttributes::default().with_title(win_title)
+  }
+
+  fn window_event(
+    &mut self,
+    event_loop: &ActiveEventLoop,
+    window_id: WindowId,
+    event: WindowEvent,
+  ) {
+    todo!()
   }
 }

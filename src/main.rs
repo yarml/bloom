@@ -1,4 +1,6 @@
 mod engine;
+mod input;
+mod app;
 
 use engine::BloomEngine;
 

@@ -53,8 +53,7 @@ impl BloomRenderer {
       .request_device(
         &DeviceDescriptor {
           label: None,
-          features: Features::empty(),
-          limits: Limits::default(),
+          ..Default::default()
         },
         None,
       )
